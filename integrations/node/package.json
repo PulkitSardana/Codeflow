@@ -1,0 +1,39 @@
+{
+  "name": "@codeflow/integration-node",
+  "version": "0.1.0",
+  "description": "Node.js HTTP, filesystem, Express, and Fastify auto-instrumentation for CodeFlow.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeflow/core": "0.1.0",
+    "@codeflow/instrumentation": "0.1.0",
+    "@codeflow/parser": "0.1.0",
+    "@codeflow/session": "0.1.0",
+    "import-in-the-middle": "^3.3.3",
+    "require-in-the-middle": "^8.0.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@codeflow/integration-playwright",
+  "version": "0.1.0",
+  "description": "Optional Playwright-powered browser recording for CodeFlow sessions.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeflow/session": "0.1.0"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.45.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

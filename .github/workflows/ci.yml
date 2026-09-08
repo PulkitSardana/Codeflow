@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm test
+      - run: CODEFLOW_RUN_NETWORK_TESTS=1 npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Regression smoke check
+        run: |
+          codeflow record --output .codeflow/before.json -- node examples/demo.js
+          CODEFLOW_DEMO_REGRESSION=1 codeflow record --output .codeflow/after.json -- node examples/demo.js
+          if codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20; then
+            echo "Expected CodeFlow to detect the intentional demo regression"
+            exit 1
+          fi

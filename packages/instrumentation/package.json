@@ -1,0 +1,36 @@
+{
+  "name": "@codeflow/instrumentation",
+  "version": "0.1.0",
+  "description": "Runtime instrumentation helpers for CodeFlow console and fetch recording.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codeflow/core": "0.1.0",
+    "@codeflow/parser": "0.1.0",
+    "@codeflow/session": "0.1.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

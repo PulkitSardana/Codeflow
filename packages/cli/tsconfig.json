@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "composite": true,
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "references": [
+    { "path": "../session" },
+    { "path": "../recorder" },
+    { "path": "../analyzer" },
+    { "path": "../exporters" },
+    { "path": "../../integrations/playwright" }
+  ],
+  "include": ["src/**/*.ts"]
+}

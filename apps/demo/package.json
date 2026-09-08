@@ -1,0 +1,13 @@
+{
+  "name": "@codeflow/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node ../../examples/demo.js",
+    "start:regression": "CODEFLOW_DEMO_REGRESSION=1 node ../../examples/demo.js"
+  },
+  "dependencies": {
+    "@codeflow/core": "0.1.0"
+  }
+}

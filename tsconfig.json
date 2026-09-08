@@ -1,0 +1,15 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/session" },
+    { "path": "packages/parser" },
+    { "path": "packages/core" },
+    { "path": "packages/instrumentation" },
+    { "path": "integrations/node" },
+    { "path": "integrations/playwright" },
+    { "path": "packages/recorder" },
+    { "path": "packages/analyzer" },
+    { "path": "packages/exporters" },
+    { "path": "packages/cli" }
+  ]
+}

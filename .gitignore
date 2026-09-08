@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.codeflow/
+coverage/
+*.tsbuildinfo
+apps/viewer/dist/
+.DS_Store
+*.log
+test-results/
+playwright-report/
+tmp/
+output/
