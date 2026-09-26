@@ -86,12 +86,12 @@ Regression detected:
 
 ```mermaid
 flowchart LR
-  CLI[codeflow CLI] --> Recorder[@codeflow/recorder]
-  Recorder --> Core[@codeflow/core trace API]
-  Recorder --> Session[Portable session JSON]
-  Session --> Analyzer[@codeflow/analyzer]
-  Analyzer --> Viewer[Local viewer]
-  Analyzer --> Exporters[Reports]
+  cli["CodeFlow CLI"] --> recorder["Recorder"]
+  recorder --> core["Core trace API"]
+  recorder --> session["Portable session JSON"]
+  session --> analyzer["Analyzer"]
+  analyzer --> viewer["Local viewer"]
+  analyzer --> exporters["Reports and exports"]
 ```
 
 See [docs/architecture.md](docs/architecture.md).
