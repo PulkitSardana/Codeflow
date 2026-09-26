@@ -39,7 +39,7 @@
     "@codeflow/instrumentation": "0.1.0",
     "@codeflow/parser": "0.1.0",
     "@codeflow/session": "0.1.0",
-    "import-in-the-middle": "^3.3.3",
+    "import-in-the-middle": "^3.5.1",
     "require-in-the-middle": "^8.0.1"
   },
   "scripts": {
