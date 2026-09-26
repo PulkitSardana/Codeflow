@@ -28,14 +28,14 @@ npm install
 npm run build
 npm test
 npm run test:e2e
-npx --no-install codeflow init
-npx --no-install codeflow record --output .codeflow/demo-session.json -- node examples/demo.js
-npx --no-install codeflow open .codeflow/demo-session.json
+npm run codeflow -- init
+npm run codeflow -- record --output .codeflow/demo-session.json -- node examples/demo.js
+npm run codeflow -- open .codeflow/demo-session.json
 ```
 
 Refresh the checked-in viewer screenshots with `npm run docs:capture-assets`.
 
-`npx --no-install` runs the CLI from this cloned workspace. After the npm package is published, install it globally with `npm install --global @codeflow/cli` or run `npx @codeflow/cli`.
+`npm run codeflow --` runs the CLI from this cloned workspace while preserving the repository as the working directory. After the npm package is published, install it globally with `npm install --global @codeflow/cli` or run `npx @codeflow/cli`.
 
 ## Example Session
 
@@ -65,9 +65,9 @@ The viewer synchronizes the timeline, call tree, source panel, event metadata, H
 ## Comparison Example
 
 ```bash
-npx --no-install codeflow record --output .codeflow/before.json -- node examples/demo.js
-CODEFLOW_DEMO_REGRESSION=1 npx --no-install codeflow record --output .codeflow/after.json -- node examples/demo.js
-npx --no-install codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20
+npm run codeflow -- record --output .codeflow/before.json -- node examples/demo.js
+CODEFLOW_DEMO_REGRESSION=1 npm run codeflow -- record --output .codeflow/after.json -- node examples/demo.js
+npm run codeflow -- compare .codeflow/before.json .codeflow/after.json --threshold 20
 ```
 
 Example output:

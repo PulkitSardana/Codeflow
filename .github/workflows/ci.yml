@@ -13,8 +13,8 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -29,7 +29,7 @@ jobs:
       - run: npm run audit:production
       - name: Upload Playwright failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-artifacts-node-${{ matrix.node }}
           path: |
@@ -39,9 +39,9 @@ jobs:
           retention-days: 7
       - name: Regression smoke check
         run: |
-          npx --no-install codeflow record --output .codeflow/before.json -- node examples/demo.js
-          CODEFLOW_DEMO_REGRESSION=1 npx --no-install codeflow record --output .codeflow/after.json -- node examples/demo.js
-          if npx --no-install codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20; then
+          npm run codeflow -- record --output .codeflow/before.json -- node examples/demo.js
+          CODEFLOW_DEMO_REGRESSION=1 npm run codeflow -- record --output .codeflow/after.json -- node examples/demo.js
+          if npm run codeflow -- compare .codeflow/before.json .codeflow/after.json --threshold 20; then
             echo "Expected CodeFlow to detect the intentional demo regression"
             exit 1
           fi

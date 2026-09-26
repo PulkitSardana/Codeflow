@@ -27,6 +27,7 @@
     "clean": "node scripts/clean.mjs",
     "docs:capture-assets": "npm run build && node scripts/capture-doc-assets.mjs",
     "audit:production": "npm audit --omit=dev --audit-level=high",
+    "codeflow": "node packages/cli/dist/index.js",
     "pack:check": "npm pack --dry-run -w @codeflow/cli",
     "release:check": "npm run build && npm run typecheck && npm test && CODEFLOW_RUN_NETWORK_TESTS=1 npm test && npm run test:e2e && npm run audit:production && npm run pack:check",
     "release:publish": "node scripts/publish-workspaces.mjs",
