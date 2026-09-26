@@ -112,7 +112,7 @@ function appendTreeMarkdown(lines: string[], node: CallTreeNode, depth: number):
 }
 
 function escapeMarkdown(value: string): string {
-  return value.replace(/\|/g, "\\|");
+  return value.split("|").join("\\|");
 }
 
 function escapeHtml(value: string): string {
@@ -120,5 +120,6 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

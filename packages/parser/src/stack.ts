@@ -43,28 +43,19 @@ export function parseStack(stack: string): ParsedStackFrame[] {
 }
 
 export function parseStackLine(line: string): ParsedStackFrame | undefined {
-  const withFunction = /^at\s+(.*?)\s+\((.*):(\d+):(\d+)\)$/.exec(line);
-  if (withFunction) {
-    return {
-      raw: line,
-      functionName: cleanFunctionName(withFunction[1]),
-      file: normalizeFile(withFunction[2]),
-      line: Number(withFunction[3]),
-      column: Number(withFunction[4])
-    };
+  if (!line.startsWith("at ")) {
+    return undefined;
   }
 
-  const withoutFunction = /^at\s+(.*):(\d+):(\d+)$/.exec(line);
-  if (withoutFunction) {
-    return {
-      raw: line,
-      file: normalizeFile(withoutFunction[1]),
-      line: Number(withoutFunction[2]),
-      column: Number(withoutFunction[3])
-    };
-  }
+  const body = line.slice(3);
+  const openParenthesis = body.endsWith(")") ? body.lastIndexOf(" (") : -1;
+  const functionName = openParenthesis > 0 ? cleanFunctionName(body.slice(0, openParenthesis)) : undefined;
+  const location = openParenthesis > 0 ? body.slice(openParenthesis + 2, -1) : body;
+  const parsedLocation = parseLocation(location);
 
-  return undefined;
+  return parsedLocation
+    ? { raw: line, functionName, ...parsedLocation }
+    : undefined;
 }
 
 export function normalizeFile(file: string): string {
@@ -99,6 +90,31 @@ function cleanFunctionName(name: string | undefined): string | undefined {
     return undefined;
   }
   return name.replace(/^async\s+/, "");
+}
+
+function parseLocation(value: string): Pick<ParsedStackFrame, "file" | "line" | "column"> | undefined {
+  const columnSeparator = value.lastIndexOf(":");
+  if (columnSeparator <= 0) {
+    return undefined;
+  }
+
+  const lineSeparator = value.lastIndexOf(":", columnSeparator - 1);
+  if (lineSeparator <= 0) {
+    return undefined;
+  }
+
+  const file = value.slice(0, lineSeparator);
+  const line = Number(value.slice(lineSeparator + 1, columnSeparator));
+  const column = Number(value.slice(columnSeparator + 1));
+  if (!file || !Number.isSafeInteger(line) || !Number.isSafeInteger(column) || line < 1 || column < 1) {
+    return undefined;
+  }
+
+  return {
+    file: normalizeFile(file),
+    line,
+    column
+  };
 }
 
 function stripRaw(frame: ParsedStackFrame | undefined): SourceLocation | undefined {

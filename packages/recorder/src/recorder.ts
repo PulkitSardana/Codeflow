@@ -24,8 +24,9 @@ import {
 import { setRecorderBridge, type CodeFlowRecorderBridge, type RecordErrorInput, type RecordEventInput, type SpanEndInput, type SpanStartInput } from "@codeflow/core";
 
 const FLUSHING_KEY = "__CODEFLOW_FLUSHING__";
-const SENSITIVE_SOURCE_FILE = /(^|\/)(?:\.env(?:\..*)?|\.npmrc|\.netrc|\.pypirc|credentials?(?:\..*)?|id_(?:rsa|ecdsa|ed25519)|[^/]+\.(?:pem|key|p12|pfx))$/i;
-const EXCLUDED_SOURCE_PATH = /(^|\/)(?:\.codeflow|\.git|dist|node_modules)(?:\/|$)/;
+const EXCLUDED_SOURCE_DIRECTORIES = new Set([".codeflow", ".git", "dist", "node_modules"]);
+const SENSITIVE_SOURCE_FILENAMES = new Set([".npmrc", ".netrc", ".pypirc", "credential", "credentials", "id_rsa", "id_ecdsa", "id_ed25519"]);
+const SENSITIVE_SOURCE_EXTENSIONS = [".pem", ".key", ".p12", ".pfx"];
 
 export interface CodeFlowRecorderOptions {
   outputFile: string;
@@ -463,7 +464,7 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
     }
 
     const normalized = relative.split(path.sep).join("/");
-    if (EXCLUDED_SOURCE_PATH.test(normalized) || SENSITIVE_SOURCE_FILE.test(normalized)) {
+    if (isExcludedSourcePath(normalized) || isSensitiveSourceFile(normalized)) {
       return undefined;
     }
     return normalized;
@@ -478,4 +479,18 @@ function readString(metadata: JsonObject | undefined, key: string): string | und
 function readNumber(metadata: JsonObject | undefined, key: string): number | undefined {
   const value = metadata?.[key];
   return typeof value === "number" ? value : undefined;
+}
+
+function isExcludedSourcePath(file: string): boolean {
+  return file.split("/").some((segment) => EXCLUDED_SOURCE_DIRECTORIES.has(segment));
+}
+
+function isSensitiveSourceFile(file: string): boolean {
+  const name = file.slice(file.lastIndexOf("/") + 1).toLowerCase();
+  return name === ".env"
+    || name.startsWith(".env.")
+    || SENSITIVE_SOURCE_FILENAMES.has(name)
+    || name.startsWith("credential.")
+    || name.startsWith("credentials.")
+    || SENSITIVE_SOURCE_EXTENSIONS.some((extension) => name.endsWith(extension));
 }
