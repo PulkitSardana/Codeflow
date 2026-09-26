@@ -39,9 +39,9 @@ jobs:
           retention-days: 7
       - name: Regression smoke check
         run: |
-          codeflow record --output .codeflow/before.json -- node examples/demo.js
-          CODEFLOW_DEMO_REGRESSION=1 codeflow record --output .codeflow/after.json -- node examples/demo.js
-          if codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20; then
+          npx --no-install codeflow record --output .codeflow/before.json -- node examples/demo.js
+          CODEFLOW_DEMO_REGRESSION=1 npx --no-install codeflow record --output .codeflow/after.json -- node examples/demo.js
+          if npx --no-install codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20; then
             echo "Expected CodeFlow to detect the intentional demo regression"
             exit 1
           fi
