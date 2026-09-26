@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "JSON, Markdown, and HTML session report exporters for CodeFlow.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PulkitSardana/Codeflow.git",
+    "directory": "packages/exporters"
+  },
+  "homepage": "https://github.com/PulkitSardana/Codeflow#readme",
+  "bugs": {
+    "url": "https://github.com/PulkitSardana/Codeflow/issues"
+  },
   "type": "module",
   "files": [
     "dist/**/*.js",

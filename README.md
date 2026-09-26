@@ -19,7 +19,7 @@ Record a real run, inspect its timeline and call tree, jump back to source, and 
 ## Requirements
 
 - Node.js 22 or later
-- npm 11 or later
+- npm 10 or later
 
 ## Quick Start
 
@@ -28,12 +28,14 @@ npm install
 npm run build
 npm test
 npm run test:e2e
-codeflow init
-codeflow record --output .codeflow/demo-session.json -- node examples/demo.js
-codeflow open .codeflow/demo-session.json
+npx --no-install codeflow init
+npx --no-install codeflow record --output .codeflow/demo-session.json -- node examples/demo.js
+npx --no-install codeflow open .codeflow/demo-session.json
 ```
 
 Refresh the checked-in viewer screenshots with `npm run docs:capture-assets`.
+
+`npx --no-install` runs the CLI from this cloned workspace. After the npm package is published, install it globally with `npm install --global @codeflow/cli` or run `npx @codeflow/cli`.
 
 ## Example Session
 
@@ -63,9 +65,9 @@ The viewer synchronizes the timeline, call tree, source panel, event metadata, H
 ## Comparison Example
 
 ```bash
-codeflow record --output .codeflow/before.json -- node examples/demo.js
-CODEFLOW_DEMO_REGRESSION=1 codeflow record --output .codeflow/after.json -- node examples/demo.js
-codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20
+npx --no-install codeflow record --output .codeflow/before.json -- node examples/demo.js
+CODEFLOW_DEMO_REGRESSION=1 npx --no-install codeflow record --output .codeflow/after.json -- node examples/demo.js
+npx --no-install codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20
 ```
 
 Example output:
@@ -141,3 +143,7 @@ Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.
 ## License
 
 [MIT](LICENSE)
+
+## Releases
+
+See [CHANGELOG.md](CHANGELOG.md) for published changes and [docs/releasing.md](docs/releasing.md) for the maintainer release process.

@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Node.js HTTP, filesystem, Express, and Fastify auto-instrumentation for CodeFlow.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PulkitSardana/Codeflow.git",
+    "directory": "integrations/node"
+  },
+  "homepage": "https://github.com/PulkitSardana/Codeflow#readme",
+  "bugs": {
+    "url": "https://github.com/PulkitSardana/Codeflow/issues"
+  },
   "type": "module",
   "files": [
     "dist/**/*.js",

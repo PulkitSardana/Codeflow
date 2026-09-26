@@ -1,8 +1,24 @@
 {
-  "name": "codeflow",
+  "name": "@codeflow/cli",
   "version": "0.1.0",
-  "description": "Local-first execution intelligence CLI and viewer for Node.js and TypeScript.",
+  "description": "Record Node.js executions, inspect runtime behavior, and compare performance regressions locally.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PulkitSardana/Codeflow.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/PulkitSardana/Codeflow#readme",
+  "bugs": {
+    "url": "https://github.com/PulkitSardana/Codeflow/issues"
+  },
+  "keywords": [
+    "codeflow",
+    "execution tracing",
+    "performance regression",
+    "nodejs",
+    "typescript"
+  ],
   "type": "module",
   "files": [
     "dist/**/*.js",
@@ -10,12 +26,13 @@
     "dist/**/*.d.ts",
     "dist/**/*.d.ts.map",
     "dist/viewer/**/*",
+    "LICENSE",
     "README.md"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "codeflow": "./dist/index.js"
+    "codeflow": "dist/index.js"
   },
   "exports": {
     ".": {
@@ -26,6 +43,9 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@codeflow/analyzer": "0.1.0",

@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Stack parsing and TypeScript source-map resolution for CodeFlow recordings.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PulkitSardana/Codeflow.git",
+    "directory": "packages/parser"
+  },
+  "homepage": "https://github.com/PulkitSardana/Codeflow#readme",
+  "bugs": {
+    "url": "https://github.com/PulkitSardana/Codeflow/issues"
+  },
   "type": "module",
   "files": [
     "dist/**/*.js",

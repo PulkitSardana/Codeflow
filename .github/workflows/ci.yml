@@ -8,11 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
       - name: Install Playwright Chromium
@@ -22,6 +26,17 @@ jobs:
       - run: npm test
       - run: CODEFLOW_RUN_NETWORK_TESTS=1 npm test
       - run: npm run test:e2e
+      - run: npm run audit:production
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-node-${{ matrix.node }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Regression smoke check
         run: |
           codeflow record --output .codeflow/before.json -- node examples/demo.js
