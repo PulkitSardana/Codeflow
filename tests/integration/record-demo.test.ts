@@ -26,5 +26,7 @@ describe.skipIf(!runNetworkTests)("demo recording", () => {
     expect(session.http.length).toBeGreaterThan(0);
     expect(session.errors.length).toBe(1);
     expect(session.files.some((file: { path: string }) => file.path === "examples/demo.js")).toBe(true);
+    expect(session.metadata.rootDir).toBeUndefined();
+    expect(session.files.every((file: { absolutePath?: string }) => file.absolutePath === undefined)).toBe(true);
   });
 });

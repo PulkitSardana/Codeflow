@@ -114,7 +114,7 @@ See [docs/cli.md](docs/cli.md).
 
 ## Privacy Model
 
-CodeFlow records locally and does not upload sessions. It does not capture passwords, cookies, authorization headers, request bodies, or response bodies by default. Fetch body previews are available only with explicit opt-in and are bounded and redacted. Obvious secrets in URLs, headers, metadata, and opt-in body previews are redacted.
+CodeFlow records locally and does not upload sessions. It does not capture passwords, cookies, authorization headers, request bodies, or response bodies by default. Fetch body previews are available only with explicit opt-in and are bounded and redacted. Obvious secrets in URLs, headers, command arguments, metadata, errors, console output, source snapshots, and opt-in body previews are redacted. Sensitive source files and absolute project paths are excluded from saved sessions.
 
 See [docs/privacy.md](docs/privacy.md).
 

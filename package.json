@@ -26,10 +26,11 @@
     "lint": "npm run typecheck",
     "clean": "node scripts/clean.mjs",
     "docs:capture-assets": "npm run build && node scripts/capture-doc-assets.mjs",
+    "audit": "npm audit --audit-level=moderate",
     "audit:production": "npm audit --omit=dev --audit-level=high",
     "codeflow": "node packages/cli/dist/index.js",
     "pack:check": "npm pack --dry-run -w @codeflow/cli",
-    "release:check": "npm run build && npm run typecheck && npm test && CODEFLOW_RUN_NETWORK_TESTS=1 npm test && npm run test:e2e && npm run audit:production && npm run pack:check",
+    "release:check": "npm run build && npm run typecheck && npm test && CODEFLOW_RUN_NETWORK_TESTS=1 npm test && npm run test:e2e && npm run audit && npm run audit:production && npm run pack:check",
     "release:publish": "node scripts/publish-workspaces.mjs",
     "demo:record": "npm run build && codeflow record --output .codeflow/demo-session.json -- node examples/demo.js",
     "demo:compare": "npm run build && codeflow record --output .codeflow/before.json -- node examples/demo.js && CODEFLOW_DEMO_REGRESSION=1 codeflow record --output .codeflow/after.json -- node examples/demo.js && codeflow compare .codeflow/before.json .codeflow/after.json --threshold 20"
@@ -54,5 +55,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "require-in-the-middle": "^8.0.1"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
   }
 }

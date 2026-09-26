@@ -3,7 +3,9 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import {
   createEmptySession,
+  redactText,
   redactUrl,
+  sanitizeCommand,
   sanitizeMetadata,
   serializeSession,
   type ExecutionSession,
@@ -22,13 +24,13 @@ export interface BrowserRecordOptions {
 export async function recordBrowserSession(options: BrowserRecordOptions): Promise<ExecutionSession> {
   const playwright = await importPlaywright();
   const projectRoot = options.projectRoot ?? process.cwd();
+  const targetUrl = redactUrl(options.url);
   const metadata: SessionMetadata = {
     project: path.basename(projectRoot),
     runtime: "playwright",
     runtimeVersion: "playwright",
     timestamp: new Date().toISOString(),
-    rootDir: projectRoot,
-    command: ["record-browser", options.url],
+    command: sanitizeCommand(["record-browser", targetUrl]),
     codeflowVersion: "0.1.0",
     platform: process.platform,
     arch: process.arch
@@ -47,7 +49,7 @@ export async function recordBrowserSession(options: BrowserRecordOptions): Promi
     session.events.push({
       id,
       type,
-      name,
+      name: redactText(name),
       timestamp: stamp.timestamp,
       time: stamp.time,
       context: { runtime: "playwright" },
@@ -56,7 +58,7 @@ export async function recordBrowserSession(options: BrowserRecordOptions): Promi
     return id;
   };
 
-  record("process-start", `record-browser ${options.url}`);
+  record("process-start", `record-browser ${targetUrl}`);
   const browser = await playwright.chromium.launch({ headless: options.headless ?? true });
   const page = await browser.newPage();
 
@@ -195,18 +197,21 @@ export async function recordBrowserSession(options: BrowserRecordOptions): Promi
 
   const recordBrowserError = (error: Error, type = error.name || "PageError") => {
     const stamp = now();
-    const eventId = record("error", type, {
-      message: error.message,
-      stack: error.stack
+    const sanitizedType = redactText(type);
+    const message = redactText(error.message);
+    const stack = error.stack ? redactText(error.stack) : undefined;
+    const eventId = record("error", sanitizedType, {
+      message,
+      stack
     });
     session.errors.push({
       id: nextId("error"),
       eventId,
       timestamp: stamp.timestamp,
       time: stamp.time,
-      type,
-      message: error.message,
-      stack: error.stack,
+      type: sanitizedType,
+      message,
+      stack,
       contextPath: ["browser"]
     });
   };
@@ -233,7 +238,7 @@ export async function recordBrowserSession(options: BrowserRecordOptions): Promi
   }
   const total = performance.now() - start;
   metadata.duration = total;
-  record("process-end", `record-browser ${options.url}`, { duration: total });
+  record("process-end", `record-browser ${targetUrl}`, { duration: total });
   fs.mkdirSync(path.dirname(options.outputFile), { recursive: true });
   fs.writeFileSync(options.outputFile, serializeSession(session), "utf8");
   return session;

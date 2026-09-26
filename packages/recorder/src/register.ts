@@ -17,7 +17,6 @@ const recorder = new CodeFlowRecorder({
     runtime: "node",
     runtimeVersion: process.version,
     timestamp: new Date().toISOString(),
-    rootDir: projectRoot,
     command,
     codeflowVersion: process.env.CODEFLOW_VERSION ?? "0.1.0",
     platform: os.platform(),

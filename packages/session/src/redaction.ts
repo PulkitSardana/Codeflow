@@ -42,7 +42,7 @@ export function redactHeaders(headers: Headers | Record<string, unknown> | undef
   const result: JsonObject = {};
   if (typeof Headers !== "undefined" && headers instanceof Headers) {
     headers.forEach((value, key) => {
-      result[key] = isSensitiveKey(key) ? REDACTED : trimString(value);
+      result[key] = isSensitiveKey(key) ? REDACTED : redactText(value);
     });
     return result;
   }
@@ -63,6 +63,13 @@ export function redactUrl(rawUrl: string): string {
         parsed.searchParams.set(key, REDACTED);
       }
     }
+    if (parsed.username) {
+      parsed.username = REDACTED;
+    }
+    if (parsed.password) {
+      parsed.password = REDACTED;
+    }
+    parsed.hash = redactSecretText(parsed.hash);
 
     if (hasProtocol) {
       return parsed.toString();
@@ -70,8 +77,35 @@ export function redactUrl(rawUrl: string): string {
 
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
-    return rawUrl.replace(/([?&][^=]*(?:token|secret|password|api_key|apikey|authorization)[^=]*=)[^&]+/gi, `$1${REDACTED}`);
+    return redactSecretText(rawUrl);
   }
+}
+
+export function redactText(value: string, maxLength = MAX_STRING_LENGTH): string {
+  return trimString(redactSecretText(value), maxLength);
+}
+
+export function sanitizeCommand(command: readonly string[] | undefined): string[] | undefined {
+  if (!command) {
+    return undefined;
+  }
+
+  let redactNextValue = false;
+  return command.map((argument) => {
+    if (redactNextValue) {
+      redactNextValue = false;
+      return REDACTED;
+    }
+
+    if (isSensitiveCommandOption(argument)) {
+      if (argument.includes("=")) {
+        return argument.replace(/=.*/s, `=${REDACTED}`);
+      }
+      redactNextValue = true;
+    }
+
+    return redactText(argument);
+  });
 }
 
 export function sanitizeMetadata(metadata: unknown): JsonObject | undefined {
@@ -158,7 +192,7 @@ export function sanitizeJson(value: unknown, depth = 0): JsonValue {
   }
 
   if (typeof value === "string") {
-    return trimString(value);
+    return redactText(value);
   }
 
   if (typeof value === "bigint") {
@@ -172,8 +206,8 @@ export function sanitizeJson(value: unknown, depth = 0): JsonValue {
   if (value instanceof Error) {
     return {
       type: value.name,
-      message: trimString(value.message),
-      stack: trimString(value.stack ?? "")
+      message: redactText(value.message),
+      stack: redactText(value.stack ?? "")
     };
   }
 
@@ -203,8 +237,8 @@ export function sanitizeJson(value: unknown, depth = 0): JsonValue {
   return trimString(String(value));
 }
 
-function trimString(value: string): string {
-  return value.length <= MAX_STRING_LENGTH ? value : `${value.slice(0, MAX_STRING_LENGTH)}...`;
+function trimString(value: string, maxLength = MAX_STRING_LENGTH): string {
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength)}...`;
 }
 
 function bodyToText(body: unknown): string | undefined {
@@ -257,8 +291,14 @@ function sanitizeFormBody(value: string): JsonObject {
 
 function redactSecretText(value: string): string {
   return value
-    .replace(/((?:password|passwd|secret|api[-_]?key|access[-_]?token|refresh[-_]?token|id[-_]?token|authorization|token)=)[^&\s"']+/gi, `$1${REDACTED}`)
-    .replace(/(Bearer\s+)[A-Za-z0-9._~+/-]+=*/gi, `$1${REDACTED}`);
+    .replace(/((?:authorization|proxy-authorization|cookie|set-cookie|password|passwd|secret|api[-_]?key|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?id|credential|jwt|token)\s*[:=]\s*["']?)(?!\[REDACTED\]|%5BREDACTED%5D)[^&\s"',}\]]+/gi, `$1${REDACTED}`)
+    .replace(/((?:authorization|proxy-authorization|cookie|set-cookie)\s*:\s*)(?:Bearer\s+)?[^\r\n]+/gi, `$1${REDACTED}`)
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+/-]+=*/gi, `$1${REDACTED}`)
+    .replace(/\beyJ[a-zA-Z0-9_-]{8,}\.[a-zA-Z0-9_-]{8,}\.[a-zA-Z0-9_-]{8,}\b/g, REDACTED);
+}
+
+function isSensitiveCommandOption(argument: string): boolean {
+  return /^--?(?:password|passwd|secret|api[-_]?key|access[-_]?token|refresh[-_]?token|id[-_]?token|credential|token)(?:=|$)/i.test(argument);
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEmptySession, parseSessionJson, redactHeaders, redactUrl, sanitizeHttpBodyPreview, sanitizeMetadata } from "@codeflow/session";
+import { createEmptySession, parseSessionJson, redactHeaders, redactText, redactUrl, sanitizeCommand, sanitizeHttpBodyPreview, sanitizeMetadata } from "@codeflow/session";
 
 describe("session format", () => {
   it("validates a minimal versioned session", () => {
@@ -39,6 +39,19 @@ describe("privacy redaction", () => {
       password: "[REDACTED]",
       nested: { apiKey: "[REDACTED]" }
     });
+    expect(redactUrl("https://user:pass@example.test/#access_token=secret")).toBe(
+      "https://%5BREDACTED%5D:%5BREDACTED%5D@example.test/#access_token=[REDACTED]"
+    );
+    expect(redactText("Authorization: Bearer secret-value")).toBe("Authorization: [REDACTED]");
+    expect(sanitizeMetadata({ detail: "access_token=secret-value" })).toEqual({ detail: "access_token=[REDACTED]" });
+    expect(sanitizeMetadata({ detail: "authorization=secret-value" })).toEqual({ detail: "authorization=[REDACTED]" });
+    expect(sanitizeCommand(["node", "app.js", "--api-key", "secret-value", "--token=another-secret"])).toEqual([
+      "node",
+      "app.js",
+      "--api-key",
+      "[REDACTED]",
+      "--token=[REDACTED]"
+    ]);
   });
 
   it("sanitizes opt-in HTTP body previews", () => {

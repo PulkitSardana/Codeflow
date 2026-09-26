@@ -7,6 +7,8 @@ import {
   createEmptySession,
   hashContent,
   languageFromPath,
+  redactText,
+  sanitizeCommand,
   sanitizeMetadata,
   serializeSession,
   type CallRecord,
@@ -22,6 +24,8 @@ import {
 import { setRecorderBridge, type CodeFlowRecorderBridge, type RecordErrorInput, type RecordEventInput, type SpanEndInput, type SpanStartInput } from "@codeflow/core";
 
 const FLUSHING_KEY = "__CODEFLOW_FLUSHING__";
+const SENSITIVE_SOURCE_FILE = /(^|\/)(?:\.env(?:\..*)?|\.npmrc|\.netrc|\.pypirc|credentials?(?:\..*)?|id_(?:rsa|ecdsa|ed25519)|[^/]+\.(?:pem|key|p12|pfx))$/i;
+const EXCLUDED_SOURCE_PATH = /(^|\/)(?:\.codeflow|\.git|dist|node_modules)(?:\/|$)/;
 
 export interface CodeFlowRecorderOptions {
   outputFile: string;
@@ -46,11 +50,12 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
 
   constructor(options: CodeFlowRecorderOptions) {
     this.outputFile = options.outputFile;
-    this.projectRoot = options.projectRoot ?? options.metadata.rootDir ?? process.cwd();
+    this.projectRoot = path.resolve(options.projectRoot ?? options.metadata.rootDir ?? process.cwd());
     this.maxSourceFileBytes = options.maxSourceFileBytes ?? 250_000;
+    const { rootDir: _rootDir, command, ...metadata } = options.metadata;
     this.session = createEmptySession({
-      ...options.metadata,
-      rootDir: options.metadata.rootDir ?? this.projectRoot
+      ...metadata,
+      command: sanitizeCommand(command)
     });
   }
 
@@ -64,7 +69,6 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
       name: this.session.metadata.command?.join(" ") || this.session.metadata.project,
       metadata: sanitizeMetadata({
         version: CODEFLOW_SESSION_VERSION,
-        cwd: this.projectRoot,
         command: this.session.metadata.command
       })
     });
@@ -114,12 +118,12 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
       id,
       eventId: event.id,
       parentId: input.parentId,
-      name: input.name,
+      name: event.name ?? input.name,
       startTime: event.time,
       callCount: 1,
-      source: input.source,
+      source: event.source,
       errorIds: [],
-      metadata: input.metadata
+      metadata: event.metadata
     };
     this.session.calls.push(call);
     this.openCalls.set(id, call);
@@ -174,15 +178,20 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
   }
 
   recordError(input: RecordErrorInput): string {
+    const type = redactText(input.type);
+    const message = redactText(input.message);
+    const stack = input.stack ? redactText(input.stack) : undefined;
+    const metadata = sanitizeMetadata(input.metadata);
+    const source = this.sanitizeSource(input.source);
     const errorEvent = this.createEvent({
       type: "error",
-      name: input.type,
+      name: type,
       parentId: input.parentId,
-      source: input.source,
+      source,
       metadata: sanitizeMetadata({
-        message: input.message,
-        stack: input.stack,
-        ...input.metadata
+        ...metadata,
+        message,
+        stack
       }),
       outcome: "error"
     });
@@ -194,12 +203,12 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
       parentId: input.parentId,
       timestamp: errorEvent.timestamp,
       time: errorEvent.time,
-      type: input.type,
-      message: input.message,
-      stack: input.stack,
-      source: input.source,
+      type,
+      message,
+      stack,
+      source,
       contextPath: this.contextPath(input.parentId),
-      metadata: input.metadata
+      metadata
     };
     this.session.errors.push(errorRecord);
 
@@ -243,7 +252,7 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
     call.endTime = now.time;
     call.duration = Math.max(0, call.endTime - call.startTime);
     if (input?.metadata) {
-      call.metadata = { ...(call.metadata ?? {}), ...input.metadata };
+      call.metadata = sanitizeMetadata({ ...(call.metadata ?? {}), ...input.metadata });
     }
     if (input?.error) {
       call.metadata = { ...(call.metadata ?? {}), error: sanitizeMetadata(input.error) ?? {} };
@@ -316,15 +325,12 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
   }
 
   private snapshotFile(file: string, source?: SourceLocation): FileSnapshot | undefined {
-    if (file.startsWith("node:") || file.includes("/node_modules/")) {
+    const relativePath = this.toProjectPath(file);
+    if (!relativePath) {
       return undefined;
     }
 
-    const absolutePath = path.isAbsolute(file) ? file : path.resolve(this.projectRoot, file);
-    const relative = path.relative(this.projectRoot, absolutePath);
-    if (relative.startsWith("..") || path.isAbsolute(relative)) {
-      return undefined;
-    }
+    const absolutePath = path.resolve(this.projectRoot, relativePath);
 
     try {
       const stat = fs.statSync(absolutePath);
@@ -333,8 +339,7 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
       }
 
       const base: FileSnapshot = {
-        path: relative.split(path.sep).join("/"),
-        absolutePath,
+        path: relativePath,
         language: languageFromPath(absolutePath),
         size: stat.size
       };
@@ -347,7 +352,7 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
         };
       }
 
-      const content = fs.readFileSync(absolutePath, "utf8");
+      const content = redactText(fs.readFileSync(absolutePath, "utf8"), this.maxSourceFileBytes);
       return {
         ...base,
         content,
@@ -358,14 +363,17 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
       if (!mappedContent) {
         return undefined;
       }
-      const relative = path.relative(this.projectRoot, mappedContent.path);
+      const mappedPath = this.toProjectPath(mappedContent.path);
+      if (!mappedPath || Buffer.byteLength(mappedContent.content, "utf8") > this.maxSourceFileBytes) {
+        return undefined;
+      }
+      const content = redactText(mappedContent.content, this.maxSourceFileBytes);
       return {
-        path: (relative && !relative.startsWith("..") && !path.isAbsolute(relative) ? relative : mappedContent.path).split(path.sep).join("/"),
-        absolutePath: mappedContent.path,
+        path: mappedPath,
         language: languageFromPath(mappedContent.path),
-        content: mappedContent.content,
-        size: Buffer.byteLength(mappedContent.content, "utf8"),
-        hash: hashContent(mappedContent.content)
+        content,
+        size: Buffer.byteLength(content, "utf8"),
+        hash: hashContent(content)
       };
     }
   }
@@ -389,7 +397,7 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
     return {
       id: forcedId ?? this.nextId("event"),
       type: input.type,
-      name: input.name,
+      name: input.name ? redactText(input.name) : undefined,
       timestamp: now.timestamp,
       time: now.time,
       duration: input.duration,
@@ -399,8 +407,8 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
         ppid: process.ppid,
         runtime: this.session.metadata.runtime
       },
-      source: input.source,
-      metadata: input.metadata,
+      source: this.sanitizeSource(input.source),
+      metadata: sanitizeMetadata(input.metadata),
       outcome: input.outcome
     };
   }
@@ -416,6 +424,49 @@ export class CodeFlowRecorder implements CodeFlowRecorderBridge {
   private nextId(prefix: "call" | "event" | "http" | "error"): string {
     this.idCounter += 1;
     return `${prefix}-${String(this.idCounter).padStart(6, "0")}`;
+  }
+
+  private sanitizeSource(source: SourceLocation | undefined): SourceLocation | undefined {
+    if (!source) {
+      return undefined;
+    }
+
+    const { file: _file, original, functionName, module, ...location } = source;
+    const file = this.toProjectPath(source.file);
+    const originalFile = this.toProjectPath(original?.file);
+    const sanitizedOriginal = original
+      ? { ...original, file: originalFile }
+      : undefined;
+
+    if (!file && !sanitizedOriginal && !functionName && !module) {
+      return undefined;
+    }
+
+    return {
+      ...location,
+      file,
+      functionName: functionName ? redactText(functionName) : undefined,
+      module: module ? redactText(module) : undefined,
+      original: sanitizedOriginal
+    };
+  }
+
+  private toProjectPath(file: string | undefined): string | undefined {
+    if (!file || file.startsWith("node:")) {
+      return undefined;
+    }
+
+    const absolutePath = path.isAbsolute(file) ? file : path.resolve(this.projectRoot, file);
+    const relative = path.relative(this.projectRoot, absolutePath);
+    if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+      return undefined;
+    }
+
+    const normalized = relative.split(path.sep).join("/");
+    if (EXCLUDED_SOURCE_PATH.test(normalized) || SENSITIVE_SOURCE_FILE.test(normalized)) {
+      return undefined;
+    }
+    return normalized;
   }
 }
 

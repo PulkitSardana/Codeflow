@@ -22,6 +22,8 @@ CodeFlow is local-first. Recorded sessions are written to local JSON files and a
 - Response bodies.
 - Files outside the project root.
 - `node_modules`, `.git`, `.codeflow`, and build output contents.
+- Sensitive source files such as `.env`, credentials files, private-key files, and package-manager credential files.
+- Absolute project paths in session metadata and source snapshots.
 
 ## Opt-In Body Capture
 
@@ -35,6 +37,6 @@ When enabled, CodeFlow records previews only, not unbounded streams. Previews ar
 
 ## Redaction
 
-CodeFlow redacts obvious secret keys in URLs, headers, metadata, and opt-in body previews, including authorization, cookies, passwords, secrets, API keys, access tokens, refresh tokens, ID tokens, JWTs, and credentials.
+CodeFlow redacts obvious secret keys and common token formats in URLs, headers, command arguments, metadata, errors, console output, opt-in body previews, and saved source snapshots. This includes authorization headers, cookies, passwords, secrets, API keys, access tokens, refresh tokens, ID tokens, JWTs, and credentials.
 
 Redaction is a safety layer, not a proof. Treat session files as development artifacts and review them before sharing outside your team.
